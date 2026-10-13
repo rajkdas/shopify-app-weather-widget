@@ -1,0 +1,27 @@
+# Databases & Secrets
+*.db
+*.sqlite3
+vc_shopify.db
+.env
+.env.*
+!.env.example
+
+# Shopify CLI build artifacts & bundles
+.shopify/
+*/.shopify/
+deploy-bundle/
+dev-bundle/
+*.br
+
+# Dependencies & Environments
+node_modules/
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# OS & IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

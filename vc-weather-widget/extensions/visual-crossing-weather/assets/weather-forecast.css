@@ -1,0 +1,377 @@
+/* ============================================================
+   VC Weather Widget — Complete Styles
+   Simple mode (.vcw-simple) + D3 mode (.forecastwidget)
+   ============================================================ */
+
+.vcw-svg-icon {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ============================================================
+   SIMPLE MODE  (.vcw-simple)
+   ============================================================ */
+
+.vcw-simple {
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #1A455D;
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 8px 12px 6px;
+  max-width: 780px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.vcw-title {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(217, 226, 236, 1);
+  margin-bottom: 5px;
+  letter-spacing: 0.1px;
+}
+
+.vcw-body {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+/* Current panel: icon + temp side by side */
+.vcw-current {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  padding-right: 14px;
+  margin-right: 4px;
+  border-right: 1px solid rgba(255,255,255,0.2);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.vcw-current-icon {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+}
+
+.vcw-current-temp {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+
+/* Forecast strip */
+.vcw-forecast {
+  display: flex;
+  flex: 1;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  align-items: stretch;
+  padding-left: 4px;
+}
+
+.vcw-forecast::-webkit-scrollbar { display: none; }
+
+/* Day card — NO background by default */
+.vcw-day {
+  flex: 1;
+  min-width: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 2px;
+  border-radius: 5px;
+  background: transparent;
+  cursor: default;
+}
+
+.vcw-day-today {
+  background: rgba(255,255,255,0.03);
+}
+
+.vcw-day-date {
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(245, 247, 250, 1);
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+.vcw-day-icon {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.vcw-day-temp {
+  font-size: 14px;
+  font-weight: 700;
+  color: #D68D88;
+  line-height: 1.1;
+}
+
+.vcw-credit {
+  text-align: right;
+  margin-top: 4px;
+  font-size: 11px;
+}
+
+.vcw-credit a {
+  color: rgba(217, 226, 236, 1);
+  text-decoration: none;
+}
+
+.vcw-credit a:hover {
+  color: rgba(245, 247, 250, 1);
+}
+
+.vcw-loading {
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: rgba(255,255,255,0.7);
+}
+
+/* Error state — theme-safe: uses rgba so it works on both light and dark storefronts */
+.vcw-error {
+  display: block !important;
+  padding: 16px;
+  color: #c0392b;
+  font-size: 14px;
+  border: 1px solid rgba(192, 57, 43, 0.35);
+  border-radius: 4px;
+  background: rgba(192, 57, 43, 0.07);
+  text-align: center;
+  line-height: 1.5;
+}
+.vcw-error strong {
+  display: block !important;
+  margin-bottom: 0px;
+}
+
+@media (max-width: 480px) {
+  .vcw-body {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .vcw-current {
+    border-right: none;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    padding-right: 0;
+    padding-bottom: 6px;
+    margin-right: 0;
+    width: 100%;
+  }
+  .vcw-forecast {
+    width: 100%;
+    padding-left: 0;
+  }
+}
+
+
+/* ============================================================
+   D3 MODE  (.forecastwidget)
+   ============================================================ */
+
+.forecastwidget {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  padding: 5px;
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #10304d;
+  color: #ffffff;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+  min-height: 200px;
+}
+
+.forecastwidget .icon-wrap {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.forecastwidget .noselect {
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.forecastwidget .days {
+  position: relative;
+  max-height: 110px;
+  flex: 0 0 110px;
+}
+
+.forecastwidget .chart {
+  flex: 1;
+  min-height: 120px;
+  overflow: hidden;
+  background: transparent;
+}
+
+.forecastwidget .chart .line {
+  fill: url(#vcw-temp-grad);
+  stroke-width: 0;
+}
+
+.forecastwidget .chart .precipbar {
+  fill: #5b9bd5;
+  opacity: 0.8;
+}
+
+.forecastwidget .chart .grid line {
+  stroke: rgba(255,255,255,0.08);
+  shape-rendering: crispEdges;
+}
+
+.forecastwidget .chart .grid path {
+  stroke-width: 0;
+}
+
+.forecastwidget .days .day {
+  position: absolute;
+  display: grid;
+  grid-template-columns: 50% 50%;
+  justify-content: center;
+  align-items: center;
+  padding: 0px 4px;
+  font-size: 0.9em;
+  justify-items: center;
+  grid-gap: 1px;
+  cursor: grab;
+  color: #ffffff;
+}
+
+.forecastwidget .days .day * {
+  grid-column: span 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.forecastwidget .days .day .maxt {
+  grid-column: 1;
+  font-weight: 600;
+  color: #D68D88;
+}
+
+.forecastwidget .days .day .mint {
+  grid-column: 2;
+  font-size: 0.9em;
+  color: rgba(245, 247, 250, 1);
+}
+
+.forecastwidget .location {
+  flex: 0;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 4px 8px;
+}
+
+.forecastwidget .location .value {
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  color: rgba(217, 226, 236, 1);
+}
+
+.forecastwidget .location .editor {
+  display: none;
+  position: absolute;
+  padding: 5px;
+  margin: 1px 0px;
+  font-size: 1.2em;
+  z-index: 1;
+  background: #1a5276;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 4px;
+}
+
+.forecastwidget .location .value:hover { color: rgba(245, 247, 250, 1); }
+.forecastwidget .location.edit .editor { display: block; }
+
+.forecastwidget .footer {
+  font-size: 0.75em;
+  color: rgba(217, 226, 236, 1);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 4px 8px;
+  margin-top: 20px;
+}
+
+.forecastwidget .footer a {
+  color: rgba(217, 226, 236, 1);
+  text-decoration: none;
+  padding: 2px 5px;
+}
+
+.forecastwidget .footer a:hover { color: rgba(245, 247, 250, 1); }
+
+.forecastwidget .viewchooser {
+  font-size: 0.8em;
+  padding: 3px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  margin: 1px 4px;
+  color: rgba(245, 247, 250, 1);
+  background: rgba(255,255,255,0.08);
+}
+
+.forecastwidget .viewchooser:hover { background: rgba(255,255,255,0.18); }
+.forecastwidget .viewchooser.selected {
+  background: rgba(255,255,255,0.25);
+  color: #ffffff;
+  font-weight: 600;
+}
+.forecastwidget .viewchooser.day { margin-left: auto; }
+
+.forecastwidget .days .day .date {
+  color: rgba(245, 247, 250, 1);
+  font-size: 1.0em;
+  white-space: nowrap;
+}
+
+.forecastwidget.edit .days { opacity: 0.1; }
+
+.forecastwidget .days .day .conditions {
+  display: none;
+  color: rgba(245, 247, 250, 1);
+  font-size: 0.85em;
+}
+
+.forecastwidget .days .day .temp {
+  font-weight: 600;
+  color: #D68D88;
+}
+
+.forecastwidget .days .day .hidden {
+  visibility: hidden;
+  display: none;
+}
+
+.forecastwidget .days .day .precip {
+  font-size: 0.8em;
+  color: #7fb3d3;
+  grid-column: span 2;
+}

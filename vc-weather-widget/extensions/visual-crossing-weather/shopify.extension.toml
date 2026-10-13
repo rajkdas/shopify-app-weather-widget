@@ -1,0 +1,8 @@
+api_version = "2026-07"
+uid = "9f037fed-a4cc-126a-0350-3bd261442c5875686d8a"
+
+[[extensions]]
+type = "theme"
+name = "VC Weather Forecast"
+handle = "vc-weather-forecast"
+description = "Display real-time weather forecasts in your storefront with a simple widget or animated D3 chart, powered by Visual Crossing Weather."

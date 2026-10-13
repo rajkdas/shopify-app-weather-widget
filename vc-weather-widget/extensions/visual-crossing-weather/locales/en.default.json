@@ -1,0 +1,38 @@
+{
+  "blocks": {
+    "weather-forecast": {
+      "name": "Weather Forecast",
+      "settings": {
+        "location": {
+          "label": "Location"
+        },
+        "mode": {
+          "label": "Widget Mode",
+          "options": {
+            "simple": "Simple",
+            "d3": "D3 (animated chart)"
+          }
+        },
+        "forecast_days": {
+          "label": "Forecast Days"
+        },
+        "unit_group": {
+          "label": "Unit System",
+          "options": {
+            "metric": "Metric (°C, km/h)",
+            "us": "US (°F, mph)"
+          }
+        },
+        "widget_title": {
+          "label": "Widget Title"
+        },
+        "show_title": {
+          "label": "Show Title"
+        },
+        "show_conditions": {
+          "label": "Show Conditions"
+        }
+      }
+    }
+  }
+}

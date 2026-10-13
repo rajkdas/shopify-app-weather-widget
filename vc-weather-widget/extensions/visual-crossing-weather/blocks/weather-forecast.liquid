@@ -1,0 +1,138 @@
+{% comment %}
+  Visual Crossing Weather Forecast – Shopify Theme App Extension Block
+  API key is stored securely on the backend (apps.visualcrossing.com).
+  The storefront never sees the raw API key.
+{% endcomment %}
+
+{%- assign location        = block.settings.location -%}
+{%- assign mode            = block.settings.mode -%}
+{%- assign forecast_days   = block.settings.forecast_days -%}
+{%- assign unit_group      = block.settings.unit_group -%}
+{%- assign widget_title    = block.settings.widget_title -%}
+{%- assign show_title      = block.settings.show_title -%}
+
+{%- assign widget_class = 'vc-weather-' | append: block.id -%}
+
+{{ 'weather-forecast.css' | asset_url | stylesheet_tag }}
+
+{%- if mode == 'd3' -%}
+  <script src="{{ 'd3.min.js' | asset_url }}" defer></script>
+{%- endif -%}
+
+<div
+  class="vc-weather-block {{ widget_class }}"
+  {{ block.shopify_attributes }}
+></div>
+
+<script>
+  (function () {
+    window.weatherWidgetConfig = window.weatherWidgetConfig || [];
+    window.weatherWidgetConfig.push({
+      selector:       ".{{ widget_class | escape }}",
+      shop:           {{ shop.permanent_domain | json }},
+      location:       {{ location | default: '' | json }},
+      unitGroup:      {{ unit_group | json }},
+      forecastDays:   {{ forecast_days | default: 7 | times: 1 }},
+      title:          {{ widget_title | default: '' | json }},
+      showTitle:      {{ show_title | json }},
+      designMode:     {{ request.design_mode | json }},
+      backendUrl:     "https://apps.visualcrossing.com"
+    });
+  }());
+</script>
+
+{%- if mode == 'd3' -%}
+  <script src="{{ 'weather-forecast-widget-d3.js' | asset_url }}" defer></script>
+{%- else -%}
+  <script src="{{ 'weather-forecast-widget-simple.js' | asset_url }}" defer></script>
+{%- endif -%}
+
+{%- if request.design_mode -%}
+  <style>
+    .vc-weather-placeholder {
+      padding: 24px;
+      border: 2px dashed #ccc;
+      border-radius: 6px;
+      text-align: center;
+      color: #888;
+      font-family: sans-serif;
+    }
+  </style>
+  <noscript>
+    <div class="vc-weather-placeholder">
+      <strong>Visual Crossing Weather Forecast</strong><br>
+      JavaScript is required to display the weather widget.
+    </div>
+  </noscript>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Weather Forecast",
+  "target": "section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Location"
+    },
+    {
+      "id": "location",
+      "type": "text",
+      "label": "Location",
+      "placeholder": "e.g. London, UK or 51.5,-0.1",
+      "info": "City name, postal/zip code, or latitude,longitude. Leave blank to use the default set in the app settings."
+    },
+    {
+      "type": "header",
+      "content": "Display Settings"
+    },
+    {
+      "id": "mode",
+      "type": "select",
+      "label": "Widget Mode",
+      "options": [
+        { "value": "simple", "label": "Simple" },
+        { "value": "d3",     "label": "D3 (animated chart)" }
+      ],
+      "default": "simple"
+    },
+    {
+      "id": "forecast_days",
+      "type": "range",
+      "label": "Forecast Days",
+      "min": 1,
+      "max": 15,
+      "step": 1,
+      "default": 7,
+      "info": "Number of days to show in the forecast (1–15)."
+    },
+    {
+      "id": "unit_group",
+      "type": "select",
+      "label": "Unit System",
+      "options": [
+        { "value": "metric", "label": "Metric (°C, km/h)" },
+        { "value": "us",     "label": "US (°F, mph)" }
+      ],
+      "default": "metric"
+    },
+    {
+      "type": "header",
+      "content": "Title"
+    },
+    {
+      "id": "widget_title",
+      "type": "text",
+      "label": "Widget Title",
+      "placeholder": "e.g. Today's Weather",
+      "info": "Leave blank to use the resolved location name."
+    },
+    {
+      "id": "show_title",
+      "type": "checkbox",
+      "label": "Show Title",
+      "default": true
+    }
+  ]
+}
+{% endschema %}
