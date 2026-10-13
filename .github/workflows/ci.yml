@@ -1,0 +1,199 @@
+name: Full-Stack CI Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  backend-ci:
+    name: FastAPI Backend, Security & GDPR Webhook Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: vc-weather-backend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: vc-weather-backend/requirements.txt
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Compile and verify Python syntax
+        run: python -m compileall -q .
+
+      - name: Run FastAPI, Cryptography, OAuth, Admin JWT & GDPR Webhook test suite
+        run: |
+          python - << 'EOF'
+          import asyncio
+          import base64
+          import hashlib
+          import hmac
+          import json
+          import os
+          from cryptography.fernet import Fernet
+
+          TEST_SECRET = "ci_test_shopify_secret_key_12345"
+          os.environ["SHOPIFY_API_KEY"] = "ci_test_shopify_key"
+          os.environ["SHOPIFY_API_SECRET"] = TEST_SECRET
+          os.environ["ENCRYPTION_KEY"] = Fernet.generate_key().decode()
+          os.environ["DATABASE_URL"] = "test_ci.db"
+
+          from fastapi.testclient import TestClient
+          from main import app
+          from shopify_app.crud import encrypt, decrypt, mask, get_or_create_shop, save_vc_key
+
+          # 1. Verify Fernet encryption, decryption & key masking
+          cipher = encrypt("VC_SECRET_API_KEY_999")
+          assert cipher != "VC_SECRET_API_KEY_999"
+          assert decrypt(cipher) == "VC_SECRET_API_KEY_999"
+          assert mask("1234567890") == "1234\u00b7\u00b7\u00b7\u00b7\u00b7890"
+
+          with TestClient(app) as client:
+              # 2. Verify Health & App Store SecurityHeadersMiddleware
+              res = client.get("/health")
+              assert res.status_code == 200
+              assert res.json() == {"status": "ok"}
+              assert res.headers.get("X-Content-Type-Options") == "nosniff"
+              assert res.headers.get("X-XSS-Protection") == "0"
+              assert res.headers.get("Referrer-Policy") == "strict-origin-when-cross-origin"
+
+              # 3. Verify WeatherCORSMiddleware preflight response
+              cors_res = client.options("/shopify/weather")
+              assert cors_res.status_code == 204
+              assert cors_res.headers.get("Access-Control-Allow-Origin") == "*"
+
+              # 4. Verify OAuth install domain validation & redirect
+              bad_install = client.get("/shopify/install?shop=invalid-domain.com")
+              assert bad_install.status_code == 400
+              ok_install = client.get("/shopify/install?shop=test-store.myshopify.com", follow_redirects=False)
+              assert ok_install.status_code == 307
+              assert "test-store.myshopify.com/admin/oauth/authorize" in ok_install.headers["location"]
+
+              # 5. Verify Embedded Admin Phase 1 Bootstrap Shell, CSP & Phase 2 JWT rejection
+              admin_shell = client.get("/shopify/home?shop=test-store.myshopify.com")
+              assert admin_shell.status_code == 200
+              assert "frame-ancestors https://*.myshopify.com https://admin.shopify.com" in admin_shell.headers.get("Content-Security-Policy", "")
+              assert "cdn.shopify.com/shopifycloud/app-bridge.js" in admin_shell.text
+
+              bad_jwt = client.get(
+                  "/shopify/home?shop=test-store.myshopify.com",
+                  headers={"Authorization": "Bearer invalid.jwt.token"}
+              )
+              assert bad_jwt.status_code == 401
+
+              # 6. Verify Weather Proxy setup status codes (401 -> 403 -> 422)
+              w_401 = client.get("/shopify/weather?shop=uninstalled-store.myshopify.com")
+              assert w_401.status_code == 401
+
+              asyncio.run(get_or_create_shop("setup-test.myshopify.com"))
+              w_403 = client.get("/shopify/weather?shop=setup-test.myshopify.com")
+              assert w_403.status_code == 403
+
+              asyncio.run(save_vc_key("setup-test.myshopify.com", "dummy_vc_key"))
+              w_422 = client.get("/shopify/weather?shop=setup-test.myshopify.com&location=")
+              assert w_422.status_code == 422
+
+              # 7. Verify Mandatory GDPR Webhooks (Missing HMAC, Invalid HMAC, Valid HMAC)
+              body_bytes = json.dumps({"shop_domain": "setup-test.myshopify.com"}).encode()
+
+              wh_missing = client.post("/shopify/webhooks/customers_data_request", content=body_bytes)
+              assert wh_missing.status_code == 401
+
+              wh_invalid = client.post(
+                  "/shopify/webhooks/customers_redact",
+                  content=body_bytes,
+                  headers={"X-Shopify-Hmac-Sha256": "invalid_signature"}
+              )
+              assert wh_invalid.status_code == 401
+
+              valid_hmac = base64.b64encode(
+                  hmac.new(TEST_SECRET.encode(), body_bytes, hashlib.sha256).digest()
+              ).decode()
+              wh_valid = client.post(
+                  "/shopify/webhooks/shop_redact",
+                  content=body_bytes,
+                  headers={"X-Shopify-Hmac-Sha256": valid_hmac, "Content-Type": "application/json"}
+              )
+              assert wh_valid.status_code == 200
+              assert wh_valid.json() == {"status": "ok"}
+
+          if os.path.exists("test_ci.db"):
+              os.remove("test_ci.db")
+
+          print("All FastAPI backend, cryptography, OAuth, JWT, and GDPR webhook tests passed!")
+          EOF
+
+  extension-ci:
+    name: Shopify Theme Extension Validation
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: vc-weather-widget
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Set up Python 3.11 (for TOML validation)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate Shopify TOML configurations
+        run: |
+          python - << 'EOF'
+          import tomllib
+
+          with open("shopify.app.toml", "rb") as f:
+              app_toml = tomllib.load(f)
+              assert "client_id" in app_toml and "webhooks" in app_toml
+
+          with open("extensions/visual-crossing-weather/shopify.extension.toml", "rb") as f:
+              ext_toml = tomllib.load(f)
+              assert "extensions" in ext_toml
+
+          print("TOML configuration files validated successfully!")
+          EOF
+
+      - name: Validate JavaScript widget bundles
+        run: |
+          node --check extensions/visual-crossing-weather/assets/weather-forecast-widget-simple.js
+          node --check extensions/visual-crossing-weather/assets/weather-forecast-widget-d3.js
+
+      - name: Validate JSON locales and Liquid Block Schema
+        run: |
+          node << 'EOF'
+          const fs = require("fs");
+
+          JSON.parse(fs.readFileSync("package.json", "utf8"));
+          JSON.parse(fs.readFileSync("extensions/visual-crossing-weather/locales/en.default.json", "utf8"));
+
+          const liquid = fs.readFileSync("extensions/visual-crossing-weather/blocks/weather-forecast.liquid", "utf8");
+          const match = liquid.match(/\{%\s*schema\s*%\}([\s\S]*?)\{%\s*endschema\s*%\}/);
+          if (!match) throw new Error("Missing {% schema %} block in weather-forecast.liquid");
+
+          const schema = JSON.parse(match[1]);
+          if (!schema.name || !Array.isArray(schema.settings)) {
+            throw new Error("Invalid Liquid schema structure");
+          }
+
+          console.log("All Shopify Theme Extension assets and Liquid schemas validated!");
+          EOF
