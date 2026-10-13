@@ -1,5 +1,6 @@
 # Visual Crossing Weather — Full-Stack Shopify App & OS 2.0 Theme Extension
 
+[![Full-Stack CI Pipeline](https://github.com/rajkdas/shopify-app-weather-widget/actions/workflows/ci.yml/badge.svg)](https://github.com/rajkdas/shopify-app-weather-widget/actions/workflows/ci.yml)
 [![Shopify API](https://img.shields.io/badge/Shopify%20API-2026--07-blue.svg)](https://shopify.dev/docs/api)
 [![Online Store 2.0](https://img.shields.io/badge/Online%20Store%202.0-App%20Blocks-success.svg)](https://shopify.dev/docs/apps/online-store/theme-app-extensions)
 [![Backend Framework](https://img.shields.io/badge/Backend-FastAPI%20%2F%20Uvicorn-009688.svg)](https://fastapi.tiangolo.com/)
@@ -47,7 +48,7 @@ Engineered to satisfy strict Shopify App Store review standards, this repository
                                     │ (API key attached server-side)
                                     ▼
 ┌────────────────────────────────────────────────────────────────────────┐
-│              					                         │
+│              		WEATHER TIMELINE API	                         │
 └────────────────────────────────────────────────────────────────────────┘
 ~~~
 
